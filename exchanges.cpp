@@ -7,6 +7,11 @@ public:
     virtual json fetchOrderBook() = 0;
     virtual OrderBook normalizeOrderBook(const json& data) = 0;
     virtual string getExchangeName() const { return "Unknown Exchange"; }
+    OrderBook getNormalizedOrderBook() {
+        json data = fetchOrderBook();
+        auto book = normalizeOrderBook(data);
+        return book;
+    }
 };
 
 class CoinbaseExchange : public Exchange {

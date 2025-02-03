@@ -5,6 +5,7 @@
 #include <memory>
 #include <stdexcept>
 #include "exchanges.cpp"
+#include "thread_utils.h"
 
 class OrderBookAggregator {
 private:
@@ -13,29 +14,27 @@ private:
 public:
     OrderBookAggregator(vector<shared_ptr<Exchange>> ex) : exchanges(move(ex)) {}
 
+    vector<OrderBook> fetchOrderBooks() {
+        ThreadGroup group;
+        for (const auto& exchange : exchanges) {
+            group.add([exchange]() { 
+                return exchange->normalizeOrderBook(exchange->fetchOrderBook()); 
+            });
+        }
+        return group.collect_results<OrderBook>();
+    }
+
     OrderBook aggregateOrderBooks() {
         OrderBook merged;
-        for (const auto& exchange : exchanges) {
-            try {
-                json data = exchange->fetchOrderBook();
-                OrderBook book = exchange->normalizeOrderBook(data);
 
-                // Debug
-                cout << "Order book from " << exchange->getExchangeName() << endl;
-                book.printOrderBook();
+        auto orderBooks = fetchOrderBooks();
+        for (const auto& book : orderBooks) {
+            for (const auto& [price, quantity] : book.bids) {
+                merged.addBid(price, quantity);
+            }
 
-                // Efficient Merging using maps:
-                for (const auto& [price, quantity] : book.bids) {
-                    merged.addBid(price, quantity); // Uses the map's efficient update
-                }
-
-                for (const auto& [price, quantity] : book.asks) {
-                    merged.addAsk(price, quantity); // Uses the map's efficient update
-                }
-
-
-            } catch (const exception& e) {
-                cerr << "Error aggregating order books: " << e.what() << endl;
+            for (const auto& [price, quantity] : book.asks) {
+                merged.addAsk(price, quantity);
             }
         }
 
