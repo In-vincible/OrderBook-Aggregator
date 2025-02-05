@@ -7,9 +7,10 @@ project(OrderBookAggregator VERSION 1.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Find the CURL and nlohmann_json packages
+# Find the CURL, nlohmann_json, Threads packages
 find_package(CURL REQUIRED)
 find_package(nlohmann_json REQUIRED)
+find_package(Threads REQUIRED)
 
 # Include directories
 include_directories(${CURL_INCLUDE_DIRS})
@@ -18,5 +19,5 @@ include_directories(${CURL_INCLUDE_DIRS})
 add_executable(OrderBookAggregator orderbook_aggregator.cpp)
 
 # Link libraries
-target_link_libraries(OrderBookAggregator ${CURL_LIBRARIES} nlohmann_json::nlohmann_json)
+target_link_libraries(OrderBookAggregator ${CURL_LIBRARIES} nlohmann_json::nlohmann_json Threads::Threads)
 
